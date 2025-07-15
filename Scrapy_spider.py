@@ -7,7 +7,6 @@ import requests
 from config import TOKEN
 import os
 
-# Перемещаем импорты selenium.webdriver.common.by и keys сюда, после инициализации selenium
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 
