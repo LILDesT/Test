@@ -151,6 +151,7 @@ class ProxySpider(scrapy.Spider):
         with open("results.json", "w", encoding="utf-8") as f:
             json.dump(self.results, f, ensure_ascii=False, indent=4)
 
+<<<<<<< HEAD
     def closed(self, reason):
         if self.start_time is not None:
             end_time = time.time()
@@ -163,3 +164,25 @@ class ProxySpider(scrapy.Spider):
             self.logger.info("Готово! Все save_id и прокси сохранены в results.json")
         else:
             self.logger.warning("Spider closed before start_time was set.") 
+=======
+    if repeat_chunk:
+        continue  # повторить тот же чанк
+
+    chunk_idx += 1
+    if chunk_idx % 3 == 0:
+        driver.quit()
+        driver = webdriver.Chrome(options=options)
+
+with open("results.json", "w", encoding="utf-8") as f:
+    json.dump(results, f, ensure_ascii=False, indent=4)
+
+driver.quit()
+print("Готово! Все save_id и прокси сохранены в results.json") 
+end_time = time.time()
+elapsed = int(end_time - start_time)
+hours = elapsed // 3600
+minutes = (elapsed % 3600) // 60
+seconds = elapsed % 60
+with open("time.txt", "w", encoding="utf-8") as f:
+    f.write(f"Время выполнения: {hours:02d}:{minutes:02d}:{seconds:02d}\n") 
+>>>>>>> b7c9c74000caee48b58d72b8106fb3d578318328
