@@ -2,6 +2,7 @@ import scrapy
 import json
 import time
 import os
+import base64
 from config import TOKEN
 
 
@@ -44,29 +45,25 @@ class ProxySpider(scrapy.Spider):
     def parse_proxy_page(self, response):
         with open(f'debug_{int(time.time())}.html', 'w', encoding='utf-8') as f:
             f.write(response.text)
-        rows = response.xpath("//section[2]/div[4]/table/tbody/tr")
+        rows = response.xpath("/html/body/section[2]/div[4]/table/tbody/tr")
         self.logger.info(f"Найдено строк: {len(rows)}")
         for row in rows:
             if len(self.proxies) >= 150:
                 break
-            tds = row.xpath("td")
-            if len(tds) >= 4:
-                ip = tds[1].xpath("string()").get().strip()
-                port_str = tds[2].xpath("string()").get().strip()
-                try:
-                    port = int(port_str)
-                except ValueError:
-                    continue
-                proto_tags = tds[3].xpath(".//a/text()").getall()
-                if proto_tags:
-                    protocols = [p.strip() for p in proto_tags]
-                else:
-                    protocols = [tds[3].xpath("string()").get().strip()]
-                self.proxies.append({
-                    "ip": ip,
-                    "port": port,
-                    "protocols": protocols
-                })
+            ip_b64 = row.xpath("./td[2]/@data-ip").get(default='').strip()
+            port_b64 = row.xpath("./td[3]/@data-port").get(default='').strip()
+            try:
+                ip = base64.b64decode(ip_b64).decode() if ip_b64 else ''
+                port = int(base64.b64decode(port_b64).decode()) if port_b64 else 0
+            except Exception:
+                continue
+            proto_tags = row.xpath("./td[4]/a/text()").getall()
+            protocols = [p.strip() for p in proto_tags] if proto_tags else []
+            self.proxies.append({
+                "ip": ip,
+                "port": port,
+                "protocols": protocols
+            })
         if response.url.endswith('page=2') or len(self.proxies) >= 150:
             with open("proxies.json", "w", encoding="utf-8") as f:
                 json.dump(self.proxies, f, ensure_ascii=False, indent=4)
@@ -151,7 +148,6 @@ class ProxySpider(scrapy.Spider):
         with open("results.json", "w", encoding="utf-8") as f:
             json.dump(self.results, f, ensure_ascii=False, indent=4)
 
-<<<<<<< HEAD
     def closed(self, reason):
         if self.start_time is not None:
             end_time = time.time()
@@ -163,26 +159,4 @@ class ProxySpider(scrapy.Spider):
                 f.write(f"Время выполнения: {hours:02d}:{minutes:02d}:{seconds:02d}\n")
             self.logger.info("Готово! Все save_id и прокси сохранены в results.json")
         else:
-            self.logger.warning("Spider closed before start_time was set.") 
-=======
-    if repeat_chunk:
-        continue  # повторить тот же чанк
-
-    chunk_idx += 1
-    if chunk_idx % 3 == 0:
-        driver.quit()
-        driver = webdriver.Chrome(options=options)
-
-with open("results.json", "w", encoding="utf-8") as f:
-    json.dump(results, f, ensure_ascii=False, indent=4)
-
-driver.quit()
-print("Готово! Все save_id и прокси сохранены в results.json") 
-end_time = time.time()
-elapsed = int(end_time - start_time)
-hours = elapsed // 3600
-minutes = (elapsed % 3600) // 60
-seconds = elapsed % 60
-with open("time.txt", "w", encoding="utf-8") as f:
-    f.write(f"Время выполнения: {hours:02d}:{minutes:02d}:{seconds:02d}\n") 
->>>>>>> b7c9c74000caee48b58d72b8106fb3d578318328
+            self.logger.warning("Spider closed before start_time was set.")
